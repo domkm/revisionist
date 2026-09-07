@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+    "plugins": [{
+      "name": "@effect/language-service",
+      "diagnostics": true,
+      "includeSuggestionsInTsc": false,
+      "ignoreEffectSuggestionsInTscExitCode": true,
+      "ignoreEffectWarningsInTscExitCode": true,
+      "ignoreEffectErrorsInTscExitCode": false,
+      "diagnosticSeverity": {
+        "floatingEffect": "error",
+        "missingEffectContext": "error",
+        "missingEffectError": "error",
+        "missingStarInYieldEffectGen": "error",
+        "returnEffectInGen": "error"
+      }
+    }]
+  }
+}

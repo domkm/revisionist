@@ -1,0 +1,49 @@
+{
+  "name": "revisionist",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.3.14",
+  "trustedDependencies": ["@effect/tsgo"],
+  "scripts": {
+    "prepare": "bun scripts/prepare.ts",
+    "typecheck": "bun scripts/typecheck.ts",
+    "lint": "bun run --bun oxlint --type-aware",
+    "lint:fix": "bun run --bun oxlint --type-aware --fix",
+    "format": "bun run --bun dprint fmt",
+    "format:check": "bun run --bun dprint check",
+    "setup:browser": "bun run --bun playwright install chromium",
+    "prerequisites": "bun scripts/prerequisites.ts",
+    "dev": "bun src/main.ts --web-only",
+    "start": "bun src/main.ts",
+    "test": "bun run prerequisites && bun test --timeout 30000 tests/unit tests/integration",
+    "build": "bun scripts/build.ts",
+    "test:smoke": "bun run prerequisites && bun test --timeout 30000 tests/smoke",
+    "check": "bun scripts/check.ts",
+    "check:clean": "bun scripts/check-clean.ts"
+  },
+  "dependencies": {
+    "@effect/platform-bun": "4.0.0-rc.112",
+    "@modelcontextprotocol/server": "2.0.0",
+    "effect": "4.0.0-rc.112",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@effect/tsgo": "0.41.0",
+    "@modelcontextprotocol/client": "2.0.0",
+    "@oven/bun-linux-x64": "1.3.14",
+    "@types/bun": "1.3.14",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "dprint": "0.57.4",
+    "husky": "9.1.7",
+    "oxlint": "1.81.0",
+    "oxlint-tsgolint": "7.0.2001",
+    "playwright": "1.63.0",
+    "typescript": "7.0.2"
+  },
+  "patchedDependencies": {
+    "@effect/platform-bun@4.0.0-rc.112": "patches/@effect%2Fplatform-bun@4.0.0-rc.112.patch"
+  }
+}

@@ -1,0 +1,31 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color: #182323;
+  background: #f5f4ee;
+}
+body {
+  margin: 0;
+}
+main {
+  max-width: 42rem;
+  margin: 15vh auto;
+  padding: 2rem;
+}
+h1 {
+  font-size: 3rem;
+  letter-spacing: -0.06em;
+  margin: 0.5rem 0 2rem;
+}
+p {
+  line-height: 1.6;
+}
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.75rem;
+}
+output {
+  display: block;
+  color: #135946;
+  font-weight: 600;
+}

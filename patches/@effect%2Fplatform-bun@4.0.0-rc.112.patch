@@ -1,0 +1,46 @@
+diff --git a/dist/BunHttpServer.js b/dist/BunHttpServer.js
+index 6aae1c5ac2d1feeff9d76bf2994d4bf60193c8b9..5944067e9f76bbfe0e78a084e27009900b9565c4 100644
+--- a/dist/BunHttpServer.js
++++ b/dist/BunHttpServer.js
+@@ -103,13 +103,15 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
+         const index = handlerStack.indexOf(handler);
+         if (index !== -1) handlerStack.splice(index, 1);
+         server.reload({
+-          fetch: handlerStack[handlerStack.length - 1]
++          fetch: handlerStack[handlerStack.length - 1],
++          ...(options.routes === undefined ? undefined : { routes: options.routes })
+         });
+         return handlerStack.length === 1 ? preemptiveShutdown : Effect.void;
+       });
+       handlerStack.push(handler);
+       server.reload({
+-        fetch: handler
++        fetch: handler,
++        ...(options.routes === undefined ? undefined : { routes: options.routes })
+       });
+     })
+   });
+diff --git a/src/BunHttpServer.ts b/src/BunHttpServer.ts
+index 4ce02e91b12852ff869f92d0911b7e6caf353c9f..189dec9cba9ad77738043002c8939e5f8c95c759 100644
+--- a/src/BunHttpServer.ts
++++ b/src/BunHttpServer.ts
+@@ -188,11 +188,17 @@ export const make = Effect.fnUntraced(
+         yield* Scope.addFinalizerExit(serveScope, () => {
+           const index = handlerStack.indexOf(handler)
+           if (index !== -1) handlerStack.splice(index, 1)
+-          server.reload({ fetch: handlerStack[handlerStack.length - 1] })
++          server.reload({
++            fetch: handlerStack[handlerStack.length - 1],
++            ...(options.routes === undefined ? undefined : { routes: options.routes })
++          })
+           return handlerStack.length === 1 ? preemptiveShutdown : Effect.void
+         })
+         handlerStack.push(handler)
+-        server.reload({ fetch: handler })
++        server.reload({
++          fetch: handler,
++          ...(options.routes === undefined ? undefined : { routes: options.routes })
++        })
+       })
+     })
+   }
