@@ -308,11 +308,52 @@ test("CI workflow uses the pinned toolchain and same aggregate check", async () 
     [
       "sudo apt-get update",
       "sudo apt-get install --yes bubblewrap apparmor-profiles",
-      "sudo install -m 0644 /usr/share/apparmor/extra-profiles/bwrap-userns-restrict /etc/apparmor.d/bwrap-userns-restrict",
-      "sudo apparmor_parser -r /etc/apparmor.d/bwrap-userns-restrict",
+      "sudo sh -ec '",
+      "  if [ ! -e \"/etc/apparmor.d/bwrap-userns-restrict\" ]; then",
+      "    install -m 0644 \"/usr/share/apparmor/extra-profiles/bwrap-userns-restrict\" \"/etc/apparmor.d/bwrap-userns-restrict\"",
+      "  fi",
+      "  cmp \"/usr/share/apparmor/extra-profiles/bwrap-userns-restrict\" \"/etc/apparmor.d/bwrap-userns-restrict\"",
+      "  apparmor_parser -r \"/etc/apparmor.d/bwrap-userns-restrict\"",
+      "'",
       "bun run setup:browser --with-deps",
       "",
     ].join("\n"),
     "bun run check",
   ]);
+});
+
+test("profile setup installs missing profiles, accepts matches, and preserves custom profiles", async () => {
+  const workflow = await Bun.file(join(root, ".github/workflows/check.yml")).text();
+  const readme = await Bun.file(join(root, "README.md")).text();
+  const temp = await fixture();
+  try {
+    const source = join(temp.directory, "packaged-profile");
+    const destination = join(temp.directory, "installed-profile");
+    const parser = join(temp.directory, "apparmor_parser");
+    await Bun.write(source, "packaged profile\n");
+    await Bun.write(parser, "#!/bin/sh\nprintf 'profile loaded\\n'\n");
+    await chmod(parser, 0o755);
+    for (const document of [workflow, readme]) {
+      const setup = document.match(/sudo sh -ec '([\s\S]*?)'/)?.[0];
+      if (!setup) throw new Error("Missing guarded profile setup");
+      const script = setup.replace("sudo sh", "sh")
+        .replaceAll("/usr/share/apparmor/extra-profiles/bwrap-userns-restrict", source)
+        .replaceAll("/etc/apparmor.d/bwrap-userns-restrict", destination);
+      for (const state of ["missing", "matching", "custom"]) {
+        if (state === "matching") await Bun.write(destination, "packaged profile\n");
+        if (state === "custom") await Bun.write(destination, "custom profile\n");
+        const result = await command(["sh", "-c", script], temp.directory, {
+          PATH: `${temp.directory}:${process.env.PATH ?? ""}`,
+        });
+        expect(result.code).toBe(state === "custom" ? 1 : 0);
+        expect(result.stdout.includes("profile loaded")).toBe(state !== "custom");
+        expect(await Bun.file(destination).text()).toBe(
+          state === "custom" ? "custom profile\n" : "packaged profile\n",
+        );
+      }
+      await unlink(destination);
+    }
+  } finally {
+    await temp.cleanup();
+  }
 });

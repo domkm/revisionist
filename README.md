@@ -14,13 +14,18 @@ Installation validates the Effect compiler, prepares dprint, and installs reposi
 
 ### Test prerequisites
 
-Tests require Chromium, its OS libraries, bubblewrap, and Linux user/PID namespace support. On Ubuntu 24.04, load the packaged AppArmor profile to permit bubblewrap namespaces:
+Tests require Chromium, its OS libraries, bubblewrap, and Linux user/PID namespace support. On Ubuntu 24.04, load the packaged AppArmor profile to permit bubblewrap namespaces. Setup refuses to overwrite a different existing profile; ask its administrator to review it if comparison fails.
 
 ```sh
 sudo apt-get update
 sudo apt-get install --yes bubblewrap apparmor-profiles
-sudo install -m 0644 /usr/share/apparmor/extra-profiles/bwrap-userns-restrict /etc/apparmor.d/bwrap-userns-restrict
-sudo apparmor_parser -r /etc/apparmor.d/bwrap-userns-restrict
+sudo sh -ec '
+  if [ ! -e "/etc/apparmor.d/bwrap-userns-restrict" ]; then
+    install -m 0644 "/usr/share/apparmor/extra-profiles/bwrap-userns-restrict" "/etc/apparmor.d/bwrap-userns-restrict"
+  fi
+  cmp "/usr/share/apparmor/extra-profiles/bwrap-userns-restrict" "/etc/apparmor.d/bwrap-userns-restrict"
+  apparmor_parser -r "/etc/apparmor.d/bwrap-userns-restrict"
+'
 bun run setup:browser --with-deps
 bun run prerequisites
 bun run check

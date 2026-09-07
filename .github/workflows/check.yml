@@ -31,7 +31,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --yes bubblewrap apparmor-profiles
-          sudo install -m 0644 /usr/share/apparmor/extra-profiles/bwrap-userns-restrict /etc/apparmor.d/bwrap-userns-restrict
-          sudo apparmor_parser -r /etc/apparmor.d/bwrap-userns-restrict
+          sudo sh -ec '
+            if [ ! -e "/etc/apparmor.d/bwrap-userns-restrict" ]; then
+              install -m 0644 "/usr/share/apparmor/extra-profiles/bwrap-userns-restrict" "/etc/apparmor.d/bwrap-userns-restrict"
+            fi
+            cmp "/usr/share/apparmor/extra-profiles/bwrap-userns-restrict" "/etc/apparmor.d/bwrap-userns-restrict"
+            apparmor_parser -r "/etc/apparmor.d/bwrap-userns-restrict"
+          '
           bun run setup:browser --with-deps
       - run: bun run check
