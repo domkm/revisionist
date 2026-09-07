@@ -34,25 +34,25 @@ export async function command(
   args: string[],
   cwd = root,
   env: Record<string, string | undefined> = {},
+  timeout = 15000,
 ) {
-  const processHandle = Bun.spawn(args, {
+  // One-shot tooling commands do not need live streams. Avoid Bun 1.3.14's
+  // async process-watcher EBADF failures observed on the Linux CI runner.
+  const result = Bun.spawnSync(args, {
     cwd,
     env: { ...process.env, ...env },
     stdout: "pipe",
     stderr: "pipe",
     stdin: "ignore",
+    timeout,
+    killSignal: "SIGKILL",
   });
-  const timeout = setTimeout(() => processHandle.kill("SIGKILL"), 15000);
-  try {
-    const [code, stdout, stderr] = await Promise.all([
-      processHandle.exited,
-      new Response(processHandle.stdout).text(),
-      new Response(processHandle.stderr).text(),
-    ]);
-    return { code, stdout, stderr, output: stdout + stderr };
-  } finally {
-    clearTimeout(timeout);
+  if (result.signalCode) {
+    throw new Error(`Command terminated by ${result.signalCode}: ${args.join(" ")}`);
   }
+  const stdout = result.stdout.toString();
+  const stderr = result.stderr.toString();
+  return { code: result.exitCode, stdout, stderr, output: stdout + stderr };
 }
 
 export const tool = (

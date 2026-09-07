@@ -5,6 +5,32 @@ import { join } from "node:path";
 import { phases } from "../../scripts/check.ts";
 import { command, fixture, root } from "../helpers/fixture.ts";
 
+test("one-shot commands preserve output and failures and enforce timeouts", async () => {
+  for (const code of [0, 7]) {
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const result = await command([
+        process.execPath,
+        "--eval",
+        `console.log("out"); console.error("err"); process.exit(${code});`,
+      ]);
+      expect(result.code).toBe(code);
+      expect(result.stdout).toBe("out\n");
+      expect(result.stderr).toBe("err\n");
+    }
+  }
+  const error = await command(
+    [
+      process.execPath,
+      "--eval",
+      "await Bun.sleep(10000);",
+    ],
+    root,
+    {},
+    100,
+  ).then(() => "Unexpected success", String);
+  expect(error).toContain("Command terminated by SIGKILL");
+});
+
 test("test helpers resolve repository paths containing spaces and percent signs", async () => {
   const temp = await fixture();
   try {
