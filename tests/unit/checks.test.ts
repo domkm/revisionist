@@ -116,6 +116,58 @@ test("missing bubblewrap and Chromium fail with setup guidance", async () => {
   }
 });
 
+test("a broken Playwright import cannot mask earlier prerequisite failures", async () => {
+  const temp = await fixture();
+  try {
+    await copyFile(
+      join(root, "scripts/prerequisites.ts"),
+      join(temp.directory, "scripts/prerequisites.ts"),
+    );
+    // Replace only the fixture's symlink; never modify the installed dependencies.
+    await unlink(join(temp.directory, "node_modules"));
+    const playwright = join(temp.directory, "node_modules/playwright");
+    await mkdir(playwright, { recursive: true });
+    await Bun.write(
+      join(playwright, "package.json"),
+      JSON.stringify({ type: "module", exports: "./index.js" }),
+    );
+    await Bun.write(
+      join(playwright, "index.js"),
+      "throw new Error(\"Injected Playwright import failure\");\nexport const chromium = {};\n",
+    );
+    const unsupported = await command([
+      process.execPath,
+      "--eval",
+      "Object.defineProperty(process, \"platform\", { value: \"darwin\" }); const entry = await import(\"./scripts/prerequisites.ts\"); await entry.prerequisites();",
+    ], temp.directory);
+    expect(unsupported.code).not.toBe(0);
+    expect(unsupported.output).toContain("require Linux x64");
+    expect(unsupported.output).not.toContain("Injected Playwright");
+    const run = () =>
+      command([process.execPath, "scripts/prerequisites.ts"], temp.directory, {
+        PATH: temp.directory,
+      });
+    const missing = await run();
+    expect(missing.code).not.toBe(0);
+    expect(missing.output).toContain("Missing bubblewrap");
+    expect(missing.output).not.toContain("Injected Playwright");
+    const bwrap = join(temp.directory, "bwrap");
+    await Bun.write(bwrap, "#!/bin/sh\nexit 1\n");
+    await chmod(bwrap, 0o755);
+    const namespace = await run();
+    expect(namespace.code).not.toBe(0);
+    expect(namespace.output).toContain("namespaces are unavailable");
+    expect(namespace.output).not.toContain("Injected Playwright");
+    await Bun.write(bwrap, "#!/bin/sh\nexit 0\n");
+    const browser = await run();
+    expect(browser.code).not.toBe(0);
+    expect(browser.output).toContain("bun run setup:browser");
+    expect(browser.output).toContain("Injected Playwright import failure");
+  } finally {
+    await temp.cleanup();
+  }
+});
+
 test("build and prerequisite checks reject unsupported hosts before creating output", async () => {
   const temp = await fixture();
   try {
@@ -253,7 +305,14 @@ test("CI workflow uses the pinned toolchain and same aggregate check", async () 
   expect(actions[1]?.with?.["bun-version-file"]).toBe(".bun-version");
   expect(job.steps.map((step) => step.run).filter(Boolean)).toEqual([
     "bun install --frozen-lockfile",
-    "sudo apt-get update\nsudo apt-get install --yes bubblewrap\nbun run setup:browser --with-deps\n",
+    [
+      "sudo apt-get update",
+      "sudo apt-get install --yes bubblewrap apparmor-profiles",
+      "sudo install -m 0644 /usr/share/apparmor/extra-profiles/bwrap-userns-restrict /etc/apparmor.d/bwrap-userns-restrict",
+      "sudo apparmor_parser -r /etc/apparmor.d/bwrap-userns-restrict",
+      "bun run setup:browser --with-deps",
+      "",
+    ].join("\n"),
     "bun run check",
   ]);
 });

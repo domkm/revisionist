@@ -14,11 +14,13 @@ Installation validates the Effect compiler, prepares dprint, and installs reposi
 
 ### Test prerequisites
 
-Tests require Chromium, its OS libraries, bubblewrap, and Linux user/PID namespace support. On Ubuntu 24.04:
+Tests require Chromium, its OS libraries, bubblewrap, and Linux user/PID namespace support. On Ubuntu 24.04, load the packaged AppArmor profile to permit bubblewrap namespaces:
 
 ```sh
 sudo apt-get update
-sudo apt-get install --yes bubblewrap
+sudo apt-get install --yes bubblewrap apparmor-profiles
+sudo install -m 0644 /usr/share/apparmor/extra-profiles/bwrap-userns-restrict /etc/apparmor.d/bwrap-userns-restrict
+sudo apparmor_parser -r /etc/apparmor.d/bwrap-userns-restrict
 bun run setup:browser --with-deps
 bun run prerequisites
 bun run check

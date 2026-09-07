@@ -1,5 +1,3 @@
-import { chromium } from "playwright";
-
 export async function prerequisites() {
   if (process.platform !== "linux" || process.arch !== "x64") {
     throw new Error(
@@ -30,6 +28,7 @@ export async function prerequisites() {
     );
   }
   try {
+    const { chromium } = await import("playwright");
     const browser = await chromium.launch();
     await browser.close();
   } catch (cause) {
