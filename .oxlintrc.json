@@ -1,0 +1,146 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "typescript",
+    "oxc"
+  ],
+  "categories": {
+    "correctness": "error"
+  },
+  "options": {
+    "typeAware": true
+  },
+  "env": {
+    "builtin": true
+  },
+  "ignorePatterns": [
+    "node_modules/**",
+    "dist/**",
+    ".cache/**",
+    ".agents/**"
+  ],
+  "rules": {
+    "typescript/no-floating-promises": [
+      "error",
+      {
+        "ignoreVoid": false
+      }
+    ],
+    "typescript/no-misused-promises": "error",
+    "eslint/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "src/web/**/*.ts",
+        "src/web/**/*.tsx",
+        "src/shared/**/*.ts"
+      ],
+      "env": {
+        "browser": true
+      },
+      "rules": {
+        "eslint/no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              "assert",
+              "assert/strict",
+              "async_hooks",
+              "buffer",
+              "bun:ffi",
+              "bun:jsc",
+              "bun:sqlite",
+              "bun:test",
+              "bun:wrap",
+              "bun",
+              "child_process",
+              "cluster",
+              "console",
+              "constants",
+              "crypto",
+              "dgram",
+              "diagnostics_channel",
+              "dns",
+              "dns/promises",
+              "domain",
+              "events",
+              "fs",
+              "fs/promises",
+              "http",
+              "http2",
+              "https",
+              "inspector",
+              "inspector/promises",
+              "module",
+              "net",
+              "os",
+              "path",
+              "path/posix",
+              "path/win32",
+              "perf_hooks",
+              "process",
+              "punycode",
+              "querystring",
+              "readline",
+              "readline/promises",
+              "repl",
+              "stream",
+              "stream/consumers",
+              "stream/promises",
+              "stream/web",
+              "string_decoder",
+              "sys",
+              "timers",
+              "timers/promises",
+              "tls",
+              "trace_events",
+              "tty",
+              "undici",
+              "url",
+              "util",
+              "util/types",
+              "v8",
+              "vm",
+              "wasi",
+              "worker_threads",
+              "ws",
+              "zlib"
+            ],
+            "patterns": [
+              "node:*",
+              "bun:*",
+              "**/app/**",
+              "**/server/**",
+              "**/mcp/**"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/web/**/*.ts",
+        "src/web/**/*.tsx"
+      ],
+      "plugins": [
+        "react",
+        "jsx-a11y"
+      ],
+      "rules": {
+        "react/rules-of-hooks": "error",
+        "react/exhaustive-deps": "error",
+        "react/jsx-key": "error",
+        "jsx-a11y/alt-text": "error",
+        "jsx-a11y/anchor-has-content": "error",
+        "jsx-a11y/aria-props": "error"
+      }
+    }
+  ]
+}
